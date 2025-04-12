@@ -12,26 +12,30 @@ if 'funcionarios_adicionados' not in st.session_state:
 
 if 'numero_rdo' not in st.session_state:
     # Inicializar com 1 ou buscar o último número usado
-    if os.path.exists("relatorios"):
-        arquivos = [f for f in os.listdir("relatorios") if f.endswith('.csv')]
-        if arquivos:
-            # Tenta extrair o último número de RDO usado
-            try:
-                numeros = []
-                for arquivo in arquivos:
-                    df = pd.read_csv(f"relatorios/{arquivo}", sep=';', encoding='utf-8-sig')
-                    if 'Número RDO' in df.columns:
-                        numeros.extend(df['Número RDO'].tolist())
-                if numeros:
-                    st.session_state.numero_rdo = max([int(n) for n in numeros if str(n).isdigit()]) + 1
-                else:
+    try:
+        if os.path.exists("relatorios"):
+            arquivos = [f for f in os.listdir("relatorios") if f.endswith('.csv')]
+            if arquivos:
+                # Tenta extrair o último número de RDO usado
+                try:
+                    numeros = []
+                    for arquivo in arquivos:
+                        df = pd.read_csv(f"relatorios/{arquivo}", sep=';', encoding='utf-8-sig')
+                        if 'Número RDO' in df.columns:
+                            numeros.extend(df['Número RDO'].tolist())
+                    if numeros:
+                        st.session_state.numero_rdo = max([int(n) for n in numeros if str(n).isdigit()]) + 1
+                    else:
+                        st.session_state.numero_rdo = 1
+                except:
                     st.session_state.numero_rdo = 1
-            except:
+            else:
                 st.session_state.numero_rdo = 1
         else:
             st.session_state.numero_rdo = 1
-    else:
+    except Exception as e:
         st.session_state.numero_rdo = 1
+        st.warning(f"Erro ao configurar número do RDO: {e}")
 
 # Autenticação simples
 if 'autenticado' not in st.session_state:
@@ -93,7 +97,7 @@ else:
         etapa_obra = st.text_input("Etapa da Obra (ex: TERRAPLANAGEM/ MURO GABIÃO/ BLOCOS E PILARES)")
     
     with col2:
-        # CORREÇÃO AQUI: Removido o parâmetro height=60
+        # CORREÇÃO: Removido o parâmetro height=60
         endereco_obra = st.text_area("Endereço da Obra")
         
         num_rrt = st.text_input("Nº RRT de SI")
@@ -160,6 +164,7 @@ else:
             st.rerun()
     
     # Exibir equipes adicionadas
+    total_funcionarios = 0
     if st.session_state.equipes:
         st.write("Equipes registradas:")
         
@@ -222,112 +227,122 @@ else:
     
     with col_botoes1:
         if st.button("📥 Salvar RDO", use_container_width=True):
-            # Formatar a data para o relatório
-            data_selecionada = data.strftime("%d/%m/%Y")
-            hora_salvamento = datetime.now().strftime("%H:%M:%S")
-            
-            # Formatar as equipes
-            equipes_info = "\n".join([
-                f"{eq['empresa']} - {eq['responsavel']} ({eq['num_funcionarios']} funcionários)"
-                for eq in st.session_state.equipes
-            ])
-            
-            # Formatar os equipamentos
-            equipamentos_info = "\n".join([
-                f"{eq['empresa']}: {eq['equipamentos']}"
-                for eq in st.session_state.equipes if eq['equipamentos']
-            ])
-            
-            # Formatar as atividades
-            atividades_texto = "\n".join([
-                f"{i+1}. {ativ}" for i, ativ in enumerate(atividades) if ativ.strip()
-            ])
-            
-            # Formatar as ocorrências
-            ocorrencias_texto = "\n".join([
-                f"- {ocor}" for ocor in ocorrencias if ocor.strip()
-            ])
-            
-            # Preparar dados do controle de chuva
-            chuva_texto = ""
-            for hora, status in chuva_por_hora.items():
-                chuva_texto += f"{hora}: {status} | "
-            
-            # Criando o dicionário de dados para salvar
-            relatorio = {
-                "Número RDO": st.session_state.numero_rdo,
-                "Data": data_selecionada,
-                "Hora": hora_salvamento,
-                "Data e Hora": f"{data_selecionada} {hora_salvamento}",
-                "Obra": nome_obra,
-                "Endereço da Obra": endereco_obra,
-                "Data de Início": data_inicio.strftime("%d/%m/%Y") if data_inicio else "",
-                "Prazo da Obra": prazo_obra,
-                "Número RRT": num_rrt,
-                "Etapa da Obra": etapa_obra,
-                "Responsável Acompanhamento": resp_acompanhamento,
-                "Responsável Técnico Principal": resp_tecnico,
-                "Clima Manhã": clima_manha,
-                "Clima Tarde": clima_tarde,
-                "Controle de Chuva": chuva_texto,
-                "Temperatura (°C)": temperatura,
-                "Número de Equipes": len(st.session_state.equipes),
-                "Número de Funcionários": total_funcionarios,
-                "Equipes": equipes_info,
-                "Equipamentos": equipamentos_info,
-                "Atividades": atividades_texto,
-                "Ocorrências": ocorrencias_texto,
-                "Usuário": st.session_state.tipo_usuario
-            }
-            
-            # Salvar em CSV formatado para Excel
-            df_relatorio = pd.DataFrame([relatorio])
-            
-            # Criar pasta para relatórios se não existir
-            os.makedirs("relatorios", exist_ok=True)
-            
-            # Nome do arquivo com data
-            arquivo_csv = f"relatorios/RDO_{st.session_state.numero_rdo}_{data.strftime('%d%m%Y')}_{nome_obra.replace(' ', '_').replace('-','_')[:30]}.csv"
-            
-            # Verificar se o arquivo existe para adicionar cabeçalho apenas na primeira vez
-            arquivo_existe = os.path.isfile(arquivo_csv)
-            
-            # Salvar com encoding e separador que o Excel reconhece bem
-            df_relatorio.to_csv(
-                arquivo_csv,
-                mode='a',
-                header=not arquivo_existe,
-                index=False,
-                encoding='utf-8-sig',  # Encoding que o Excel reconhece acentos
-                sep=';'  # Usar ponto-e-vírgula como separador (padrão em Excel BR)
-            )
-            
-            # Lidando com os arquivos
-            if uploaded_files:
-                # Criar pasta para arquivos se não existir
-                pasta_data = data.strftime("%d-%m-%Y")
-                pasta_obra = nome_obra.replace(" ", "_").replace("-","_")[:30]
-                pasta_destino = f"arquivos/{pasta_obra}/{pasta_data}"
-                os.makedirs(pasta_destino, exist_ok=True)
+            try:
+                # Formatar a data para o relatório
+                data_selecionada = data.strftime("%d/%m/%Y")
+                hora_salvamento = datetime.now().strftime("%H:%M:%S")
                 
-                # Salvar arquivos com suas descrições
-                for i, file in enumerate(uploaded_files):
-                    # Salvar o arquivo
-                    with open(f"{pasta_destino}/{file.name}", "wb") as f:
-                        f.write(file.getbuffer())
+                # Formatar as equipes
+                equipes_info = "\n".join([
+                    f"{eq['empresa']} - {eq['responsavel']} ({eq['num_funcionarios']} funcionários)"
+                    for eq in st.session_state.equipes
+                ]) if st.session_state.equipes else "Nenhuma equipe registrada"
+                
+                # Formatar os equipamentos
+                equipamentos_info = "\n".join([
+                    f"{eq['empresa']}: {eq['equipamentos']}"
+                    for eq in st.session_state.equipes if eq['equipamentos']
+                ]) if st.session_state.equipes else "Nenhum equipamento registrado"
+                
+                # Formatar as atividades
+                atividades_texto = "\n".join([
+                    f"{i+1}. {ativ}" for i, ativ in enumerate(atividades) if ativ.strip()
+                ]) if any(ativ.strip() for ativ in atividades) else "Nenhuma atividade registrada"
+                
+                # Formatar as ocorrências
+                ocorrencias_texto = "\n".join([
+                    f"- {ocor}" for ocor in ocorrencias if ocor.strip()
+                ]) if any(ocor.strip() for ocor in ocorrencias) else "Nenhuma ocorrência registrada"
+                
+                # Preparar dados do controle de chuva
+                chuva_texto = ""
+                for hora, status in chuva_por_hora.items():
+                    chuva_texto += f"{hora}: {status} | "
+                
+                # Criando o dicionário de dados para salvar
+                relatorio = {
+                    "Número RDO": st.session_state.numero_rdo,
+                    "Data": data_selecionada,
+                    "Hora": hora_salvamento,
+                    "Data e Hora": f"{data_selecionada} {hora_salvamento}",
+                    "Obra": nome_obra,
+                    "Endereço da Obra": endereco_obra,
+                    "Data de Início": data_inicio.strftime("%d/%m/%Y") if data_inicio else "Não definida",
+                    "Prazo da Obra": prazo_obra,
+                    "Número RRT": num_rrt,
+                    "Etapa da Obra": etapa_obra,
+                    "Responsável Acompanhamento": resp_acompanhamento,
+                    "Responsável Técnico Principal": resp_tecnico,
+                    "Clima Manhã": clima_manha,
+                    "Clima Tarde": clima_tarde,
+                    "Controle de Chuva": chuva_texto,
+                    "Temperatura (°C)": temperatura,
+                    "Número de Equipes": len(st.session_state.equipes),
+                    "Número de Funcionários": total_funcionarios,
+                    "Equipes": equipes_info,
+                    "Equipamentos": equipamentos_info,
+                    "Atividades": atividades_texto,
+                    "Ocorrências": ocorrencias_texto,
+                    "Usuário": st.session_state.tipo_usuario
+                }
+                
+                # Salvar em CSV formatado para Excel
+                df_relatorio = pd.DataFrame([relatorio])
+                
+                # Criar pasta para relatórios se não existir
+                os.makedirs("relatorios", exist_ok=True)
+                
+                # Nome do arquivo com data - garantindo que não haja caracteres especiais
+                nome_obra_limpo = nome_obra.replace(' ', '_').replace('-','_').replace('/','_')[:30]
+                arquivo_csv = f"relatorios/RDO_{st.session_state.numero_rdo}_{data.strftime('%d%m%Y')}_{nome_obra_limpo}.csv"
+                
+                # Verificar se o arquivo existe para adicionar cabeçalho apenas na primeira vez
+                arquivo_existe = os.path.isfile(arquivo_csv)
+                
+                # Salvar com encoding e separador que o Excel reconhece bem
+                df_relatorio.to_csv(
+                    arquivo_csv,
+                    mode='a',
+                    header=not arquivo_existe,
+                    index=False,
+                    encoding='utf-8-sig',  # Encoding que o Excel reconhece acentos
+                    sep=';'  # Usar ponto-e-vírgula como separador (padrão em Excel BR)
+                )
+                
+                # Lidando com os arquivos
+                if uploaded_files:
+                    # Criar pasta para arquivos se não existir
+                    pasta_data = data.strftime("%d-%m-%Y")
+                    pasta_obra = nome_obra.replace(" ", "_").replace("-","_").replace('/','_')[:30]
+                    pasta_destino = f"arquivos/{pasta_obra}/{pasta_data}"
+                    os.makedirs(pasta_destino, exist_ok=True)
                     
-                    # Salvar a descrição
-                    desc_key = f"desc_{file.name}"
-                    if desc_key in st.session_state:
-                        with open(f"{pasta_destino}/{file.name}.desc.txt", "w") as f:
-                            f.write(st.session_state[desc_key])
+                    # Salvar arquivos com suas descrições
+                    for i, file in enumerate(uploaded_files):
+                        try:
+                            # Salvar o arquivo
+                            with open(f"{pasta_destino}/{file.name}", "wb") as f:
+                                f.write(file.getbuffer())
+                            
+                            # Salvar a descrição
+                            desc_key = f"desc_{file.name}"
+                            if desc_key in st.session_state:
+                                with open(f"{pasta_destino}/{file.name}.desc.txt", "w", encoding="utf-8") as f:
+                                    f.write(st.session_state[desc_key])
+                        except Exception as e:
+                            st.warning(f"Erro ao salvar arquivo {file.name}: {e}")
+                    
+                    st.success(f"RDO Nº {st.session_state.numero_rdo} e {len(uploaded_files)} arquivos salvos com sucesso!")
+                else:
+                    st.success(f"RDO Nº {st.session_state.numero_rdo} salvo com sucesso!")
                 
-                st.success(f"RDO Nº {st.session_state.numero_rdo} e {len(uploaded_files)} arquivos salvos com sucesso!")
-            else:
-                st.success(f"RDO Nº {st.session_state.numero_rdo} salvo com sucesso!")
+                # Incrementar o número do RDO para o próximo relatório
+                st.session_state.numero_rdo += 1
             
-            # Incrementar o número do RDO para o próximo relatório
-            st.session_state.numero_rdo += 1
+            except Exception as e:
+                st.error(f"Erro ao salvar o relatório: {e}")
+                import traceback
+                st.error(traceback.format_exc())
     
     with col_botoes2:
         if st.button("🚪 Sair", use_container_width=True):
@@ -337,18 +352,21 @@ else:
     
     # Adicionar um histórico simples dos relatórios
     st.subheader("Relatórios Anteriores")
-    if os.path.exists("relatorios"):
-        arquivos_relatorios = [f for f in os.listdir("relatorios") if f.endswith('.csv')]
-        if arquivos_relatorios:
-            arquivos_relatorios.sort(reverse=True)  # Ordenar do mais recente para o mais antigo
-            for arquivo in arquivos_relatorios[:5]:  # Mostrar apenas os 5 últimos
-                st.write(f"📊 {arquivo}")
-                # Opção para visualizar o relatório
-                if st.button(f"Visualizar {arquivo}", key=f"view_{arquivo}"):
-                    try:
-                        df = pd.read_csv(f"relatorios/{arquivo}", sep=';', encoding='utf-8-sig')
-                        st.dataframe(df)
-                    except Exception as e:
-                        st.error(f"Erro ao abrir o arquivo: {e}")
-        else:
-            st.write("Nenhum relatório salvo ainda.")
+    try:
+        if os.path.exists("relatorios"):
+            arquivos_relatorios = [f for f in os.listdir("relatorios") if f.endswith('.csv')]
+            if arquivos_relatorios:
+                arquivos_relatorios.sort(reverse=True)  # Ordenar do mais recente para o mais antigo
+                for arquivo in arquivos_relatorios[:5]:  # Mostrar apenas os 5 últimos
+                    st.write(f"📊 {arquivo}")
+                    # Opção para visualizar o relatório
+                    if st.button(f"Visualizar {arquivo}", key=f"view_{arquivo}"):
+                        try:
+                            df = pd.read_csv(f"relatorios/{arquivo}", sep=';', encoding='utf-8-sig')
+                            st.dataframe(df)
+                        except Exception as e:
+                            st.error(f"Erro ao abrir o arquivo: {e}")
+            else:
+                st.write("Nenhum relatório salvo ainda.")
+    except Exception as e:
+        st.warning(f"Erro ao acessar relatórios anteriores: {e}")
