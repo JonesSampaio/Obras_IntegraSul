@@ -93,7 +93,8 @@ else:
         etapa_obra = st.text_input("Etapa da Obra (ex: TERRAPLANAGEM/ MURO GABIÃO/ BLOCOS E PILARES)")
     
     with col2:
-        endereco_obra = st.text_area("Endereço da Obra", height=60)
+        # CORREÇÃO AQUI: Removido o parâmetro height=60
+        endereco_obra = st.text_area("Endereço da Obra")
         
         num_rrt = st.text_input("Nº RRT de SI")
         
@@ -120,149 +121,132 @@ else:
     
     # Criar layout de checkboxes para cada hora
     chuva_por_hora = {}
-    cols = st.columns(len(horarios))
-    
+    cols_chuva = st.columns(10)
     for i, hora in enumerate(horarios):
-        with cols[i]:
-            st.write(f"{hora}")
-            chove = not st.checkbox("Não chove", key=f"chuva_{hora}", value=True)
-            chuva_por_hora[hora] = "Chove" if chove else "Não chove"
+        with cols_chuva[i]:
+            st.write(hora)
+            chuva = st.checkbox("Chuva", key=f"chuva_{hora}")
+            chuva_por_hora[hora] = "Sim" if chuva else "Não"
     
-    # Temperatura
-    temperatura = st.number_input("Temperatura (°C)", min_value=-10, max_value=50)
+    # Adicionar temperatura
+    temperatura = st.slider("Temperatura média (°C)", 0, 40, 25)
     
-    # Equipes em um formato mais estruturado
-    st.subheader("Equipes de Trabalho")
+    # Equipes na obra (refatorado)
+    st.subheader("Equipes na Obra")
     
-    # Sistema para adicionar múltiplas empresas/equipes
     if 'equipes' not in st.session_state:
         st.session_state.equipes = []
     
-    with st.expander("Adicionar Empresa/Equipe", expanded=True):
-        col1, col2, col3 = st.columns(3)
+    # Interface para adicionar equipes
+    with st.expander("Adicionar Equipe", expanded=True):
+        col1, col2 = st.columns(2)
         with col1:
-            empresa = st.text_input("Nome da Empresa", key="empresa_input")
-        with col2:
-            responsavel = st.text_input("Responsável", key="resp_input")
-        with col3:
-            num_funcionarios = st.number_input("Quantidade de Funcionários", min_value=0, value=1, key="num_func_input")
+            empresa = st.text_input("Empresa")
+            responsavel = st.text_input("Responsável")
         
-        equipamentos = st.text_area("Equipamentos/Função dos Funcionários", key="equip_input")
+        with col2:
+            num_funcionarios = st.number_input("Número de Funcionários", min_value=1, value=1)
+            equipamentos = st.text_area("Equipamentos Utilizados")
         
         if st.button("Adicionar Equipe"):
-            if empresa:
-                nova_equipe = {
-                    "empresa": empresa,
-                    "responsavel": responsavel,
-                    "num_funcionarios": int(num_funcionarios),
-                    "equipamentos": equipamentos
-                }
-                st.session_state.equipes.append(nova_equipe)
-                st.success(f"Equipe da empresa {empresa} adicionada!")
-                st.rerun()
+            nova_equipe = {
+                "empresa": empresa,
+                "responsavel": responsavel,
+                "num_funcionarios": num_funcionarios,
+                "equipamentos": equipamentos
+            }
+            st.session_state.equipes.append(nova_equipe)
+            st.success(f"Equipe de {empresa} adicionada com sucesso!")
+            st.rerun()
     
     # Exibir equipes adicionadas
-    total_funcionarios = 0
     if st.session_state.equipes:
+        st.write("Equipes registradas:")
+        
+        # Calcular totais
+        total_funcionarios = sum(eq["num_funcionarios"] for eq in st.session_state.equipes)
+        
         for i, equipe in enumerate(st.session_state.equipes):
-            total_funcionarios += equipe["num_funcionarios"]
-            st.markdown(f"""
-            **Empresa {i+1}: {equipe['empresa']}**  
-            Responsável: {equipe['responsavel']}  
-            Funcionários: {equipe['num_funcionarios']}  
-            Equipamentos/Função: {equipe['equipamentos']}
-            """)
+            col1, col2, col3 = st.columns([3, 1, 1])
+            with col1:
+                st.write(f"**{equipe['empresa']}** - {equipe['responsavel']}")
+            with col2:
+                st.write(f"{equipe['num_funcionarios']} funcionários")
+            with col3:
+                if st.button("Remover", key=f"remove_{i}"):
+                    st.session_state.equipes.pop(i)
+                    st.rerun()
+            
+            st.write(f"Equipamentos: {equipe['equipamentos']}")
+            st.divider()
         
-        # Mostrar totais
-        num_equipes = len(st.session_state.equipes)
-        st.info(f"Total de Equipes: {num_equipes} | Total de Funcionários: {total_funcionarios}")
-        
-        if st.button("Limpar Equipes"):
-            st.session_state.equipes = []
-            st.rerun()
-    else:
-        st.warning("Nenhuma equipe adicionada ainda.")
+        st.info(f"Total: {len(st.session_state.equipes)} equipes com {total_funcionarios} funcionários")
     
-    # Atividades realizadas em formato numerado
-    st.subheader("Relatórios de Atividades")
+    # Atividades do dia
+    st.subheader("Atividades do Dia")
     
-    if 'atividades' not in st.session_state:
-        st.session_state.atividades = ["", "", "", "", "", "", ""]  # Inicializar com 7 campos vazios
+    # Interface para atividades
+    num_atividades = st.number_input("Número de atividades a registrar", min_value=1, max_value=10, value=3)
     
-    for i in range(7):
-        st.session_state.atividades[i] = st.text_area(f"Atividade {i+1}", value=st.session_state.atividades[i], height=50, key=f"atividade_{i}")
+    atividades = []
+    for i in range(num_atividades):
+        atividade = st.text_area(f"Atividade {i+1}", key=f"atividade_{i}")
+        atividades.append(atividade)
     
     # Ocorrências
     st.subheader("Ocorrências")
-    if 'ocorrencias' not in st.session_state:
-        st.session_state.ocorrencias = ["", "", ""]  # Inicializar com 3 campos vazios
     
-    for i in range(3):
-        st.session_state.ocorrencias[i] = st.text_area(f"Ocorrência {i+1}", value=st.session_state.ocorrencias[i], height=50, key=f"ocorrencia_{i}")
+    num_ocorrencias = st.number_input("Número de ocorrências a registrar", min_value=0, max_value=5, value=0)
     
-    # Upload de arquivos (fotos e PDFs) com descrições
-    st.subheader("Relatório Fotográfico")
+    ocorrencias = []
+    for i in range(num_ocorrencias):
+        ocorrencia = st.text_area(f"Ocorrência {i+1}", key=f"ocorrencia_{i}")
+        ocorrencias.append(ocorrencia)
     
-    if 'uploaded_files' not in st.session_state:
-        st.session_state.uploaded_files = []
-        st.session_state.file_descriptions = []
+    # Upload de arquivos
+    st.subheader("Relatório Fotográfico / Documentos")
     
-    uploaded_files = st.file_uploader(
-        "Carregar fotos e documentos",
-        accept_multiple_files=True,
-        type=["jpg", "jpeg", "png", "pdf"],
-        key="file_upload"
-    )
+    uploaded_files = st.file_uploader("Carregar arquivos", accept_multiple_files=True)
     
+    # Adicionar descrição para cada arquivo
     if uploaded_files:
-        for i, file in enumerate(uploaded_files):
-            file_type = file.name.split('.')[-1].lower()
-            
-            col1, col2 = st.columns([1, 2])
-            with col1:
-                if file_type in ['jpg', 'jpeg', 'png']:
-                    st.image(file, caption=file.name, width=250)
-                elif file_type == 'pdf':
-                    st.write(f"📄 PDF: {file.name}")
-            with col2:
-                desc_key = f"desc_{file.name}"
-                file_desc = st.text_area(f"Descrição da imagem {i+1}", key=desc_key, height=100)
-                
-                # Armazenar descrição na sessão
-                if desc_key not in st.session_state:
-                    st.session_state[desc_key] = ""
-                st.session_state[desc_key] = file_desc
-        
-        st.session_state.uploaded_files = uploaded_files
+        st.write("Descreva cada arquivo:")
+        for file in uploaded_files:
+            desc_key = f"desc_{file.name}"
+            if desc_key not in st.session_state:
+                st.session_state[desc_key] = ""
+            st.session_state[desc_key] = st.text_area(f"Descrição de {file.name}", st.session_state[desc_key])
     
-    # Botão salvar e sair em lados opostos
+    # Botões de ação
     col_botoes1, col_botoes2 = st.columns(2)
     
     with col_botoes1:
-        if st.button("💾 Salvar Relatório", use_container_width=True):
-            # Usar a data do seletor mas a hora atual no momento do salvamento
+        if st.button("📥 Salvar RDO", use_container_width=True):
+            # Formatar a data para o relatório
             data_selecionada = data.strftime("%d/%m/%Y")
-            hora_salvamento = datetime.now().strftime("%H:%M")
+            hora_salvamento = datetime.now().strftime("%H:%M:%S")
             
-            # Preparar dados das equipes
-            equipes_info = ""
-            equipamentos_info = ""
+            # Formatar as equipes
+            equipes_info = "\n".join([
+                f"{eq['empresa']} - {eq['responsavel']} ({eq['num_funcionarios']} funcionários)"
+                for eq in st.session_state.equipes
+            ])
             
-            for equipe in st.session_state.equipes:
-                equipes_info += f"{equipe['empresa']} ({equipe['responsavel']}): {equipe['num_funcionarios']} | "
-                equipamentos_info += f"{equipe['empresa']}: {equipe['equipamentos']} | "
+            # Formatar os equipamentos
+            equipamentos_info = "\n".join([
+                f"{eq['empresa']}: {eq['equipamentos']}"
+                for eq in st.session_state.equipes if eq['equipamentos']
+            ])
             
-            # Preparar dados das atividades
-            atividades_texto = ""
-            for i, atividade in enumerate(st.session_state.atividades):
-                if atividade:
-                    atividades_texto += f"{i+1}. {atividade} | "
+            # Formatar as atividades
+            atividades_texto = "\n".join([
+                f"{i+1}. {ativ}" for i, ativ in enumerate(atividades) if ativ.strip()
+            ])
             
-            # Preparar dados das ocorrências
-            ocorrencias_texto = ""
-            for i, ocorrencia in enumerate(st.session_state.ocorrencias):
-                if ocorrencia:
-                    ocorrencias_texto += f"{i+1}. {ocorrencia} | "
+            # Formatar as ocorrências
+            ocorrencias_texto = "\n".join([
+                f"- {ocor}" for ocor in ocorrencias if ocor.strip()
+            ])
             
             # Preparar dados do controle de chuva
             chuva_texto = ""
