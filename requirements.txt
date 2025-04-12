@@ -1,0 +1,3 @@
+ streamlit
+ pandas
+"Adiciona requisitos do projeto"
