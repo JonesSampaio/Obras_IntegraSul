@@ -1,0 +1,17 @@
+{
+    "admin": {
+        "senha": "fdfb3ee95ef399119de7aad6f124047941d4d0307230b99d3b3ef9764b628dfb",
+        "nivel": "admin",
+        "nome_completo": "Administrador do Sistema",
+        "primeiro_acesso": false,
+        "data_criacao": "2025-04-14 08:56:36",
+        "ultima_alteracao_senha": "2025-04-14 08:58:29"
+    },
+    "Fillipe Ely": {
+        "nome_completo": "Fillipe Marques Ely",
+        "nivel_acesso": "arquiteto",
+        "senha": "edc6e9fd91117fcccdd0612fd64ef7e754b3cf20349b9fc2da693f6ed82544a2",
+        "ultima_troca_senha": "2025-04-14 09:40:08",
+        "ativo": true
+    }
+}

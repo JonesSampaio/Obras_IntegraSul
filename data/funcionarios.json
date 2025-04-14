@@ -1,0 +1,17 @@
+{
+    "1": {
+        "nome": "João Silva",
+        "cargo": "Pedreiro",
+        "ativo": true
+    },
+    "2": {
+        "nome": "Maria Santos",
+        "cargo": "Ajudante",
+        "ativo": true
+    },
+    "3": {
+        "nome": "José Oliveira",
+        "cargo": "Eletricista",
+        "ativo": true
+    }
+}

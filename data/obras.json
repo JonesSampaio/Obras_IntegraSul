@@ -1,0 +1,42 @@
+{
+    "Esc Est Med Adelina Isabela Konzen": {
+        "data_inicio": "2024-01-15",
+        "prazo": "2024-12-31",
+        "etapa_atual": "Fundações",
+        "endereco": "ROD Rsc 287 Km 68, nº Sn, CEP 95815-000 - Venâncio Aires",
+        "rrt": "10747",
+        "responsavel_principal": "Eng. Carlos Silva",
+        "responsavel_acompanhamento": "Eng. Ana Oliveira",
+        "status": "Em andamento"
+    },
+    "Esc Est Ens Fun Décio Martins Costa": {
+        "data_inicio": "2024-02-01",
+        "prazo": "2024-11-30",
+        "etapa_atual": "Alvenaria",
+        "endereco": "Rua Principal, 123, Centro - Santa Cruz do Sul",
+        "rrt": "10748",
+        "responsavel_principal": "Eng. Pedro Santos",
+        "responsavel_acompanhamento": "Eng. Maria Lima",
+        "status": "Em andamento"
+    },
+    "Esc Est Ens Fun Dr Carlos Barbosa Gonçalves": {
+        "data_inicio": "2024-03-01",
+        "prazo": "2024-10-31",
+        "etapa_atual": "Estrutura",
+        "endereco": "Av. Central, 456, Centro - Cachoeira do Sul",
+        "rrt": "10749",
+        "responsavel_principal": "Eng. João Pereira",
+        "responsavel_acompanhamento": "Eng. Paula Costa",
+        "status": "Em andamento"
+    },
+    "Esc Est Ens Fun Dr João Carlos Haas Sobrinho": {
+        "data_inicio": "2024-04-01",
+        "prazo": "2024-09-30",
+        "etapa_atual": "Acabamento",
+        "endereco": "Rua das Flores, 789, Centro - Lajeado",
+        "rrt": "10750",
+        "responsavel_principal": "Eng. Lucas Mendes",
+        "responsavel_acompanhamento": "Eng. Beatriz Almeida",
+        "status": "Em andamento"
+    }
+}

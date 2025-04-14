@@ -1,0 +1,23 @@
+{
+    "gestão": {
+        "senha": "fdfb3ee95ef399119de7aad6f124047941d4d0307230b99d3b3ef9764b628dfb",
+        "nível": "administrador",
+        "nome_completo": "Administrador do Sistema",
+        "primeiro_acesso": false,
+        "ultima_alteracao_senha": "2025-04-12 15:01:23"
+    },
+    "gerente": {
+        "senha": "2d7160f39753d77cc6b128b3c5c1c0e865ac027f8bc5185406901e07ddb253f1",
+        "nível": "Gerente",
+        "nome_completo": "Gerente de Obras",
+        "primeiro_acesso": false,
+        "ultima_alteracao_senha": "2025-04-13 14:30:00"
+    },
+    "encarregado": {
+        "senha": "973ac2bcee1cdd97289b012e9c7459ab9824d41e801016dd874a4e39c2292c2f",
+        "nível": "usuario",
+        "nome_completo": "Encarregado de Campo",
+        "primeiro_acesso": false,
+        "ultima_alteracao_senha": "2025-04-13 14:30:00"
+    }
+}

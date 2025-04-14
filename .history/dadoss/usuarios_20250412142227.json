@@ -1,0 +1,8 @@
+{
+    "gestao": {
+        "senha": "gestao2024",
+        "nivel": "admin",
+        "nome_completo": "Administrador do Sistema",
+        "primeiro_acesso": true
+    }
+}
